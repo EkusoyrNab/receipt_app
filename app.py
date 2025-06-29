@@ -11,17 +11,18 @@ from utils import (
     get_receipt_details,
     delete_receipt
 )
-from users import load_users, save_users, hash_password, check_password
 
 st.set_page_config(page_title="レシート管理", layout="wide")
 
-# --- ユーザー読み込み ---
-users = load_users()
+# --- 固定ユーザー情報（ハッシュ化済みパスワード） ---
+USER_CREDENTIALS = {
+    "kaimonojouzu": "$2b$12$cPwRgJbwZ3jL1Uf5iPlCOefFJbLwtZYptaUS598Fiyk8B8jMOqB6e"
+}
 
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 
-# --- セッションタイムアウト（30分 = 1800秒） ---
+# --- セッションタイムアウト（30分） ---
 if st.session_state["authenticated"]:
     last_login_time = st.session_state.get("login_time", 0)
     current_time = time.time()
@@ -31,56 +32,35 @@ if st.session_state["authenticated"]:
         st.session_state["login_time"] = None
         st.warning("セッションの有効期限が切れました。再度ログインしてください。")
     else:
-        st.session_state["login_time"] = current_time  # 更新
+        st.session_state["login_time"] = current_time
 
-# --- セッションフラグ方式で強制再描画 ---
 if st.session_state.get("force_refresh", False):
     st.session_state["force_refresh"] = False
-    # Streamlit <1.10 でも問題なし
-    # pass → 自然に再描画される
 
-# --- ログイン/登録画面 ---
+# --- ログイン画面 ---
 if not st.session_state["authenticated"]:
-    st.title("ログイン / 新規登録")
+    st.title("ログイン")
 
-    tab1, tab2 = st.tabs(["ログイン", "新規登録"])
+    username = st.text_input("ユーザー名", key="login_username")
+    password = st.text_input("パスワード", type="password", key="login_password")
+    login_button = st.button("ログイン")
 
-    # --- ログイン ---
-    with tab1:
-        username = st.text_input("ユーザー名", key="login_username")
-        password = st.text_input("パスワード", type="password", key="login_password")
-        login_button = st.button("ログイン")
-
-        if login_button:
-            if username in users and check_password(password, users[username]["password"]):
+    if login_button:
+        if username in USER_CREDENTIALS:
+            hashed_pw = USER_CREDENTIALS[username]
+            if bcrypt.checkpw(password.encode(), hashed_pw.encode()):
                 st.session_state["authenticated"] = True
                 st.session_state["username"] = username
                 st.session_state["login_time"] = time.time()
-                st.success(f"ようこそ、{users[username]['name']} さん！")
-
-                # ✅ フラグをセット
+                st.success(f"ようこそ、{username} さん！")
                 st.session_state["force_refresh"] = True
             else:
-                st.error("ユーザー名またはパスワードが間違っています")
-
-    # --- 新規登録 ---
-    with tab2:
-        new_name = st.text_input("名前", key="register_name")
-        new_username = st.text_input("新しいユーザー名", key="register_username")
-        new_password = st.text_input("新しいパスワード", type="password", key="register_password")
-        register_button = st.button("新規登録")
-
-        if register_button:
-            if new_username in users:
-                st.error("このユーザー名は既に存在します")
-            else:
-                hashed_pw = hash_password(new_password)
-                users[new_username] = {"name": new_name, "password": hashed_pw}
-                save_users(users)
-                st.success("登録が完了しました！ログインタブからログインしてください。")
+                st.error("パスワードが間違っています")
+        else:
+            st.error("ユーザー名が間違っています")
 
 else:
-    st.sidebar.write(f"ログイン中: {users[st.session_state['username']]['name']}")
+    st.sidebar.write(f"ログイン中: {st.session_state['username']}")
     if st.sidebar.button("ログアウト"):
         st.session_state["authenticated"] = False
         st.session_state["username"] = ""
@@ -146,7 +126,7 @@ else:
                 if st.button("編集", key=f"edit_{row['レシートID']}"):
                     st.session_state["edit_receipt_id"] = row['レシートID']
                     st.session_state["edit_receipt_label"] = f"{row['店名']} ({row['購入日']})"
-                    st.switch_page("pages/edit_receipt.py")
+                    st.switch_page("edit_receipt.py")
 
             with col3:
                 if st.button("削除", key=f"delete_{row['レシートID']}"):
@@ -156,4 +136,4 @@ else:
                         st.rerun()
 
     if st.button("新規登録"):
-        st.switch_page("pages/new_receipt_info.py")
+        st.switch_page("new_receipt_info.py")
