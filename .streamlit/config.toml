@@ -1,0 +1,7 @@
+[theme]
+base="dark"
+primaryColor="#00CFFF"      # 明るい青
+backgroundColor="#2C2F48"   # ダークネイビー
+secondaryBackgroundColor="#3B3E5A"  # 少し明るめの背景
+textColor="#FFFFFF"         # 白文字
+font="sans serif"
