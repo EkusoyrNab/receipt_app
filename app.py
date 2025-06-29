@@ -16,7 +16,7 @@ st.set_page_config(page_title="レシート管理", layout="wide")
 
 # --- 固定ユーザー情報（ハッシュ化済みパスワード） ---
 USER_CREDENTIALS = {
-    "kaimonojouzu": "$2b$12$iUZt3n1dNeSUIuBYSKvX5uZhfSeaMS9v9giRqBAJlS9b9RQbsxb1m"  # ← ここに自分のハッシュを入れる
+    "admin": "$2b$12$iUZt3n1dNeSUIuBYSKvX5uZhfSeaMS9v9giRqBAJlS9b9RQbsxb1m"  # ← ここに生成したハッシュを貼る
 }
 
 if "authenticated" not in st.session_state:
@@ -34,8 +34,11 @@ if st.session_state["authenticated"]:
     else:
         st.session_state["login_time"] = current_time
 
+# --- セッションフラグ方式で再描画管理 ---
 if st.session_state.get("force_refresh", False):
     st.session_state["force_refresh"] = False
+    # Streamlit <1.10 でもOK
+    # pass → 自然に再描画
 
 # --- ログイン画面 ---
 if not st.session_state["authenticated"]:
@@ -53,7 +56,7 @@ if not st.session_state["authenticated"]:
                 st.session_state["username"] = username
                 st.session_state["login_time"] = time.time()
                 st.success(f"ようこそ、{username} さん！")
-                st.session_state["force_refresh"] = True
+                st.session_state["force_refresh"] = True  # ✅ 成功後に自動でアプリ表示
             else:
                 st.error("パスワードが間違っています")
         else:
@@ -62,7 +65,7 @@ if not st.session_state["authenticated"]:
 else:
     st.sidebar.write(f"ログイン中: {st.session_state['username']} さん")
     if st.sidebar.button("ログアウト"):
-        st.session_state.clear()  # ✅ セッションクリアで安全ログアウト
+        st.session_state.clear()  # ✅ セッション全クリア
 
     # --- アプリ本体 -----------------
     st.title("🧾 レシート管理アプリ")
