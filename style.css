@@ -1,0 +1,8 @@
+/* 例: ボタンやテキストの微調整 */
+button {
+  border-radius: 12px;
+}
+
+h1 {
+  color: #2C3E50;
+}
