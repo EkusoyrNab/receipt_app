@@ -16,13 +16,13 @@ st.set_page_config(page_title="レシート管理", layout="wide")
 
 # --- 固定ユーザー情報（ハッシュ化済みパスワード） ---
 USER_CREDENTIALS = {
-    "kaimonojouzu": "$2b$12$cPwRgJbwZ3jL1Uf5iPlCOefFJbLwtZYptaUS598Fiyk8B8jMOqB6e"
+    "admin": "$2b$12$iUZt3n1dNeSUIuBYSKvX5uZhfSeaMS9v9giRqBAJlS9b9RQbsxb1m"  # ← ここに自分のハッシュを入れる
 }
 
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 
-# --- セッションタイムアウト（30分） ---
+# --- セッションタイムアウト（30分 = 1800秒） ---
 if st.session_state["authenticated"]:
     last_login_time = st.session_state.get("login_time", 0)
     current_time = time.time()
@@ -62,10 +62,7 @@ if not st.session_state["authenticated"]:
 else:
     st.sidebar.write(f"ログイン中: {st.session_state['username']} さん")
     if st.sidebar.button("ログアウト"):
-        st.session_state["authenticated"] = False
-        st.session_state["username"] = ""
-        st.session_state["login_time"] = None
-        st.experimental_rerun()
+        st.session_state.clear()  # ✅ セッションクリアで安全ログアウト
 
     # --- アプリ本体 -----------------
     st.title("🧾 レシート管理アプリ")
@@ -126,7 +123,7 @@ else:
                 if st.button("編集", key=f"edit_{row['レシートID']}"):
                     st.session_state["edit_receipt_id"] = row['レシートID']
                     st.session_state["edit_receipt_label"] = f"{row['店名']} ({row['購入日']})"
-                    st.switch_page("pages/edit_receipt.py")
+                    st.switch_page("edit_receipt.py")
 
             with col3:
                 if st.button("削除", key=f"delete_{row['レシートID']}"):
@@ -136,4 +133,4 @@ else:
                         st.rerun()
 
     if st.button("新規登録"):
-        st.switch_page("pages/new_receipt_info.py")
+        st.switch_page("new_receipt_info.py")
