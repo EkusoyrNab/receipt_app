@@ -60,7 +60,7 @@ if not st.session_state["authenticated"]:
             st.error("ユーザー名が間違っています")
 
 else:
-    st.sidebar.write(f"ログイン中: {st.session_state['username']}")
+    st.sidebar.write(f"ログイン中: {st.session_state['username']} さん")
     if st.sidebar.button("ログアウト"):
         st.session_state["authenticated"] = False
         st.session_state["username"] = ""
@@ -126,7 +126,7 @@ else:
                 if st.button("編集", key=f"edit_{row['レシートID']}"):
                     st.session_state["edit_receipt_id"] = row['レシートID']
                     st.session_state["edit_receipt_label"] = f"{row['店名']} ({row['購入日']})"
-                    st.switch_page("edit_receipt.py")
+                    st.switch_page("pages/edit_receipt.py")
 
             with col3:
                 if st.button("削除", key=f"delete_{row['レシートID']}"):
@@ -136,4 +136,4 @@ else:
                         st.rerun()
 
     if st.button("新規登録"):
-        st.switch_page("new_receipt_info.py")
+        st.switch_page("pages/new_receipt_info.py")
