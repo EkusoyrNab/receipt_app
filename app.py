@@ -16,7 +16,7 @@ st.set_page_config(page_title="レシート管理", layout="wide")
 
 # --- 固定ユーザー情報（ハッシュ化済みパスワード） ---
 USER_CREDENTIALS = {
-    "admin": "$2b$12$iUZt3n1dNeSUIuBYSKvX5uZhfSeaMS9v9giRqBAJlS9b9RQbsxb1m"  # ← ここに生成したハッシュを貼る
+    "kaimonojouzu": "$2b$12$iUZt3n1dNeSUIuBYSKvX5uZhfSeaMS9v9giRqBAJlS9b9RQbsxb1m"  # ← ここに生成したハッシュを貼る
 }
 
 if "authenticated" not in st.session_state:
