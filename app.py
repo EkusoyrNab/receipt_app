@@ -8,21 +8,21 @@ from utils import (
     get_receipts_by_month,
     get_total_by_month,
     get_category_summary,
-    get_receipt_details,
+    get_receipt,
     delete_receipt
 )
 
 st.set_page_config(page_title="レシート管理", layout="wide")
 
-# --- 固定ユーザー情報（ハッシュ化済みパスワード） ---
+# --- 固定ユーザー（ハッシュ化パスワード） ---
 USER_CREDENTIALS = {
-    "kaimonojouzu": "$2b$12$iUZt3n1dNeSUIuBYSKvX5uZhfSeaMS9v9giRqBAJlS9b9RQbsxb1m"  # ← ここに生成したハッシュを貼る
+    "admin": "$2b$12$iUZt3n1dNeSUIuBYSKvX5uZhfSeaMS9v9giRqBAJlS9b9RQbsxb1m"  # 生成したハッシュに置き換える
 }
 
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 
-# --- セッションタイムアウト（30分 = 1800秒） ---
+# セッションタイムアウト
 if st.session_state["authenticated"]:
     last_login_time = st.session_state.get("login_time", 0)
     current_time = time.time()
@@ -34,13 +34,9 @@ if st.session_state["authenticated"]:
     else:
         st.session_state["login_time"] = current_time
 
-# --- セッションフラグ方式で再描画管理 ---
 if st.session_state.get("force_refresh", False):
     st.session_state["force_refresh"] = False
-    # Streamlit <1.10 でもOK
-    # pass → 自然に再描画
 
-# --- ログイン画面 ---
 if not st.session_state["authenticated"]:
     st.title("ログイン")
 
@@ -56,7 +52,7 @@ if not st.session_state["authenticated"]:
                 st.session_state["username"] = username
                 st.session_state["login_time"] = time.time()
                 st.success(f"ようこそ、{username} さん！")
-                st.session_state["force_refresh"] = True  # ✅ 成功後に自動でアプリ表示
+                st.session_state["force_refresh"] = True
             else:
                 st.error("パスワードが間違っています")
         else:
@@ -65,9 +61,9 @@ if not st.session_state["authenticated"]:
 else:
     st.sidebar.write(f"ログイン中: {st.session_state['username']} さん")
     if st.sidebar.button("ログアウト"):
-        st.session_state.clear()  # ✅ セッション全クリア
+        st.session_state.clear()
 
-    # --- アプリ本体 -----------------
+    # --- メインアプリ ---
     st.title("🧾 レシート管理アプリ")
 
     init_db()
@@ -85,13 +81,7 @@ else:
     category_df = get_category_summary(year, month)
     if not category_df.empty:
         st.subheader("カテゴリ別割合")
-        fig = px.pie(
-            category_df,
-            values="total",
-            names="category",
-            title="カテゴリ別割合",
-            hole=0.4
-        )
+        fig = px.pie(category_df, values="total", names="shop_category", hole=0.4)
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.write("データがありません。")
@@ -102,38 +92,26 @@ else:
     if receipts_df.empty:
         st.write("レシートが登録されていません。")
     else:
-        summary_list = []
-        for rid, group in receipts_df.groupby("receipt_id"):
-            summary_list.append({
-                "レシートID": rid,
-                "店名": group["shop_name"].iloc[0],
-                "購入日": group["date"].iloc[0],
-                "合計金額": group["price"].sum()
-            })
-        summary_df = pd.DataFrame(summary_list)
-
-        for idx, row in summary_df.iterrows():
-            st.write(f"#### {row['店名']} - {row['購入日']} - 合計: {row['合計金額']:,} 円")
+        for idx, row in receipts_df.iterrows():
+            st.write(f"#### {row['shop_name']} - {row['date']} - 合計: {row['total']:,} 円")
             col1, col2, col3 = st.columns(3)
 
             with col1:
-                if st.button("参照", key=f"view_{row['レシートID']}"):
-                    details_df = get_receipt_details(row['レシートID'])
-                    st.write("商品一覧（プレビュー）")
-                    st.table(details_df)
+                if st.button("参照", key=f"view_{row['receipt_id']}"):
+                    receipt_df = get_receipt(row['receipt_id'])
+                    st.write(receipt_df)
 
             with col2:
-                if st.button("編集", key=f"edit_{row['レシートID']}"):
-                    st.session_state["edit_receipt_id"] = row['レシートID']
-                    st.session_state["edit_receipt_label"] = f"{row['店名']} ({row['購入日']})"
+                if st.button("編集", key=f"edit_{row['receipt_id']}"):
+                    st.session_state["edit_receipt_id"] = row['receipt_id']
                     st.switch_page("edit_receipt.py")
 
             with col3:
-                if st.button("削除", key=f"delete_{row['レシートID']}"):
-                    if st.confirm(f"このレシートを削除しますか？（ID: {row['レシートID']}）"):
-                        delete_receipt(row['レシートID'])
+                if st.button("削除", key=f"delete_{row['receipt_id']}"):
+                    if st.confirm(f"このレシートを削除しますか？（ID: {row['receipt_id']}）"):
+                        delete_receipt(row['receipt_id'])
                         st.success("削除が完了しました。")
                         st.rerun()
 
     if st.button("新規登録"):
-        st.switch_page("new_receipt_info.py")
+        st.switch_page("new_receipt.py")
