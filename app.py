@@ -104,7 +104,7 @@ else:
             with col2:
                 if st.button("編集", key=f"edit_{row['receipt_id']}"):
                     st.session_state["edit_receipt_id"] = row['receipt_id']
-                    st.switch_page("edit_receipt.py")
+                    st.switch_page("pages/edit_receipt.py")
 
             with col3:
                 if st.button("削除", key=f"delete_{row['receipt_id']}"):
@@ -114,4 +114,4 @@ else:
                         st.rerun()
 
     if st.button("新規登録"):
-        st.switch_page("new_receipt.py")
+        st.switch_page("pages/new_receipt.py")
